@@ -1,40 +1,58 @@
 const fs = require('fs')
-const Table = require('cli-table')
-const isString = require('inspected/schema/is-string')
+const yargs = require('yargs')
+const formatters = require('./formatters')
+const outputters = require('./outputters')
+const cartesian = require('./cartesian')
 
-const flatten = arr => [].concat.apply([], arr)
+const processData = data => {
+  const headers = Object.keys(data)
+  const collections = Object.keys(data).map(k => data[k])
+  const rows = cartesian(...collections)
 
-const cartesian = (...sets) =>
-  sets.reduce((acc, set) => flatten(acc.map(x => set.map(y => [...x, y]))), [
-    [],
-  ])
-
-const output = results => {
-  const table = new Table({
-    head: results.headers,
-  })
-
-  table.push(...results.rows)
-  console.log(table.toString())
+  return {
+    headers,
+    rows,
+  }
 }
 
-const args = process.argv
-
-if (args.length <= 2) {
-  console.log('No input data path specified.')
-  process.exit(1)
+const processJson = jsonPath => {
+  const json = fs.readFileSync(jsonPath, 'utf8')
+  const data = JSON.parse(json)
+  return processData(data)
 }
 
-const json = fs.readFileSync(args[2], 'utf8')
-const data = JSON.parse(json)
+const output = (formatterId, outputterId, results) => {
+  const formatterEntry = formatters.find(f => f.id === formatterId)
+  if (!formatterEntry) {
+    throw new Error(`Formatter with id '${formatterId}' not found.`)
+  }
 
-const headers = Object.keys(data)
-const collections = Object.keys(data).map(k => data[k])
-const rows = cartesian(...collections)
+  const outputterEntry = outputters.find(o => o.id === outputterId)
+  if (!outputterEntry) {
+    throw new Error(`Outputter with id '${outputterId}' not found.`)
+  }
 
-const results = {
-  headers,
-  rows,
+  const resultsString = formatterEntry.formatter(results)
+  outputterEntry.outputter(resultsString)
 }
 
-output(results)
+const commandJson = args => {
+  const jsonArgs = args
+    .usage('Usage $0 json [options]')
+    .alias('p', 'path')
+    .describe('p', 'Json file path')
+    .string('p')
+    .example('$0 json -p ./foo.json')
+    .demandOption(['path'], 'You must specify a JSON path.').argv
+
+  const results = processJson(jsonArgs.path)
+  output('csv', 'console', results)
+}
+
+const argv = yargs
+  .usage('$0 <command>')
+  .command('json', 'Process combinations from JSON file', commandJson)
+  .demandCommand(1, 'You must specify a command.')
+  .help('h')
+  .alias('h', 'help')
+  .version().argv

@@ -42,11 +42,16 @@ const commandJson = args => {
     .alias('p', 'path')
     .describe('p', 'Json file path')
     .string('p')
+    .alias('f', 'formatter')
+    .describe('f', 'Formatter for results')
+    .choices('f', ['csv', 'table'])
+    .default('f', 'table')
+    .demandOption(['path'], 'You must specify a JSON path.')
     .example('$0 json -p ./foo.json')
-    .demandOption(['path'], 'You must specify a JSON path.').argv
+    .example('$0 json -p ./foo.json -f csv').argv
 
   const results = processJson(jsonArgs.path)
-  output('csv', 'console', results)
+  output(jsonArgs.formatter, 'console', results)
 }
 
 const argv = yargs

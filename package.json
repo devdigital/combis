@@ -8,7 +8,8 @@
   "scripts": {
     "build": "babel ./src --out-dir . --ignore *.test.js",
     "watch": "babel ./src -w . --out-dir . --ignore *.test.js",
-    "release": "standard-version"
+    "release": "standard-version",
+    "test": "echo No tests specified"
   },
   "dependencies": {
     "cli-table": "^0.3.1",

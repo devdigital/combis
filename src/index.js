@@ -40,7 +40,7 @@ const output = (formatterId, outputterId, results) => {
 
 const commandJson = args => {
   const jsonArgs = args
-    .usage('Usage $0 json [options]')
+    .usage('Usage combis json [options]')
     .alias('p', 'path')
     .describe('p', 'Json file path')
     .string('p')
@@ -49,8 +49,8 @@ const commandJson = args => {
     .choices('f', ['csv', 'table'])
     .default('f', 'table')
     .demandOption(['path'], 'You must specify a JSON path.')
-    .example('$0 json -p ./foo.json')
-    .example('$0 json -p ./foo.json -f csv').argv
+    .example('combis json -p ./foo.json')
+    .example('combis json -p ./foo.json -f csv').argv
 
   const results = processJson(jsonArgs.path)
   output(jsonArgs.formatter, 'console', results)
